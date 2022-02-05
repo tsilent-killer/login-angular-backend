@@ -93,23 +93,39 @@ module.exports.viewProfile = async (req, res, next) => {
 
 
 module.exports.editProfile = async (req, res, next) => {
-    try{
-        const id = req.params.id;
-        const { username, email, password } = req.body;
-        console.log('updating user...', id, req.body)
-        const sql = `update users set username='${username}', email='${email}', password='${password}' where id = ${id}`;
-        db.query(sql, (err, result) => {
-            if(err){
-                console.log('error occured...', err)
-            } else {
-                res.send({
-                    message: 'updated user profile ...',
-                    data: result
-                })
-            }
-        })
-    } catch {
+  console.log('registering new user', req.body)
+    try {
+      const id = req.params.id;
+      const { username, email, password } = req.body; 
+      const hashed_password = md5(password.toString())
+      console.log('updating user...', id, req.body)
 
+      const checkUsername = `Select username FROM users WHERE username = ?`;
+      db.query(checkUsername, [username], (err, result, fields) => {
+        if(!result.length){
+          console.log('hello')
+        const sql = `update users set username='${username}', email='${email}', password='${hashed_password}' where id = ${id}`;
+        db.query(
+            sql, [username, email, hashed_password],
+          (err, result, fields) =>{
+            console.log(result)
+            if(err){
+              console.log(err)
+              res.send({ status: 0, data: err });
+            }else{
+              console.log('user update successful...')
+              let token = jwt.sign({ data: result }, 'secret')
+              res.send({ status: 1, data: result, token : token });
+            }
+          })
+        } else {
+            console.log('username occupied...')
+            res.send({status: 0, message: 'username occupied'})
+        }
+      });
+    } catch (error) {
+        console.log(error)
+        res.send({ status: 0, error: error });
     }
 }
 
@@ -137,7 +153,8 @@ module.exports.deleteProfile = async (req, res, next) => {
 
 module.exports.uploadImage = async (req, res) => {
     try {
-        const imgName ="http://localhost:3000/uploads/" + req.file.filename;
+        const id = req.params.id;
+        const imgName =`http://localhost:3000/` + req.file.filename;
         console.log(res.file);
         console.log(imgName);
         const sql = `UPDATE users SET img = '${imgName}' WHERE id = ${req.params.id}`;

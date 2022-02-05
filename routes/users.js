@@ -9,7 +9,6 @@ router.get(`/profile/:id`, users.viewProfile);
 router.put(`/profile/:id/edit`, users.editProfile);
 router.delete(`/profile/:id`, users.deleteProfile);
 
-
 const multer = require("multer");
 
 const DIR = "./uploads";
@@ -20,8 +19,8 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     const fileName = file.originalname.toLowerCase().split(" ").join("-");
-    console.log(fileName);
-    cb(null, "abc" + "-" + fileName);
+    console.log('diskStorage...', fileName);
+    cb(null, "img-" + fileName);
   },
 });
 
@@ -43,4 +42,4 @@ var upload = multer({
 
 router.post(`/profile/upload/:id`, upload.single("image"), users.uploadImage);
 
-module.exports = router;
+module.exports = router; 
